@@ -190,7 +190,68 @@ class JSONCallback(RdbCallback):
         self._end_key(key)
         self._out.write('}')
 
+class CSVCallback(RdbCallback):
+    def __init__(self, out):
+        self._out = out
+        self._is_first_db = True
+        self._has_databases = False
+        self._is_first_key_in_db = True
+        self._elements_in_key = 0 
+        self._element_index = 0
+        
+    def start_rdb(self):
+        pass
+    
+    def start_database(self, db_number):
+        self._is_first_db = False
+        self._has_databases = True
+        self._is_first_key_in_db = True
 
+    def end_database(self, db_number):
+        pass
+        
+    def end_rdb(self):
+        self._out.write('\r\n')
+
+    def _start_key(self, key, length):
+        self._is_first_key_in_db = False
+        self._elements_in_key = length
+        self._element_index = 0
+    
+    def _end_key(self, key):
+        pass
+    
+    def set(self, key, value, expiry, info):
+        self._start_key(key, 0)
+        self._out.write('%s,,%s\r\n' % (encode_key(key), encode_value(value)))
+    
+    def start_hash(self, key, length, expiry, info):
+        pass
+    
+    def hset(self, key, field, value):
+        self._out.write('%s,%s,%s\r\n' % (encode_key(key), encode_key(field), encode_value(value)))
+    
+    def end_hash(self, key):
+        pass
+
+    def start_list(self, key, length, expiry, info):
+        pass
+    
+    def rpush(self, key, value) :
+        self._out.write('%s,,%s\r\n' % (encode_value(key), encode_value(value)))
+    
+    def end_list(self, key):
+        pass
+
+    def start_sorted_set(self, key, length, expiry, info):
+        pass
+    
+    def zadd(self, key, score, member):
+        self._out.write('%s,%s,%s\r\n' % (encode_key(key), encode_key(member), encode_value(score)))
+    
+    def end_sorted_set(self, key):
+        pass
+    
 class DiffCallback(RdbCallback):
     '''Prints the contents of RDB in a format that is unix sort friendly, 
         so that two rdb files can be diffed easily'''
